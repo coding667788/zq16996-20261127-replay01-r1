@@ -1,0 +1,195 @@
+{
+  "schema": "proofinterlock/case@1",
+  "description": "Proxy same-person, shared trust anchor, and shared subordinate issuer examples.",
+  "people": [
+    {
+      "id": "p_alice",
+      "aliases": ["alice-laptop", "alice-phone", "alice-agent-7"]
+    },
+    {
+      "id": "p_root",
+      "aliases": ["root-hsm", "root-anchor-account"],
+      "failure_domains": ["fd-root"]
+    },
+    {
+      "id": "p_dana",
+      "aliases": ["dana-issuer-prod"],
+      "failure_domains": ["fd-dana"]
+    },
+    {
+      "id": "p_erin",
+      "aliases": ["erin-issuer-backup"],
+      "failure_domains": ["fd-erin"]
+    },
+    {
+      "id": "p_frank",
+      "aliases": ["frank-proxy-one", "frank-proxy-two"],
+      "failure_domains": ["fd-frank-shared"]
+    }
+  ],
+  "trust_anchors": ["c_root_anchor", "p_root"],
+  "budget": 6,
+  "requests": [
+    {
+      "id": "proxy-login",
+      "person": "alice-phone",
+      "service": "deploy",
+      "rule": "alice_badge"
+    },
+    {
+      "id": "shared-anchor-good",
+      "person": "alice-agent-7",
+      "service": "deploy",
+      "rule": "good_two_sources"
+    },
+    {
+      "id": "shared-subordinate-issuer-bad",
+      "person": "alice-agent-7",
+      "service": "deploy",
+      "rule": "bad_two_sources"
+    },
+    {
+      "id": "or-tie",
+      "person": "alice-agent-7",
+      "service": "deploy",
+      "rule": "either_dana_or_erin"
+    },
+    {
+      "id": "cycle-proof",
+      "person": "alice-agent-7",
+      "service": "deploy",
+      "rule": "cycle_a"
+    }
+  ],
+  "request": {
+    "id": "shared-anchor-good",
+    "person": "alice-agent-7",
+    "service": "deploy",
+    "rule": "good_two_sources"
+  },
+  "credentials": [
+    {
+      "id": "c_root_anchor",
+      "person_id": "p_alice",
+      "issuer": "root-hsm",
+      "role": "public-trust-anchor",
+      "services": ["deploy"],
+      "tier": 0,
+      "failure_domains": ["fd-root"],
+      "trust_anchor": true
+    },
+    {
+      "id": "c_alice_badge",
+      "person_id": "p_alice",
+      "issuer": "dana-issuer-prod",
+      "role": "deployer",
+      "services": ["deploy"],
+      "tier": 1,
+      "failure_domains": ["fd-dana"]
+    },
+    {
+      "id": "c_dana_source",
+      "person_id": "p_alice",
+      "issuer": "dana-issuer-prod",
+      "role": "independent-source-a",
+      "services": ["deploy"],
+      "tier": 2,
+      "failure_domains": ["fd-dana"]
+    },
+    {
+      "id": "c_erin_source",
+      "person_id": "p_alice",
+      "issuer": "erin-issuer-backup",
+      "role": "independent-source-b",
+      "services": ["deploy"],
+      "tier": 2,
+      "failure_domains": ["fd-erin"]
+    },
+    {
+      "id": "c_frank_one",
+      "person_id": "p_alice",
+      "issuer": "frank-proxy-one",
+      "role": "apparently-independent-a",
+      "services": ["deploy"],
+      "tier": 2,
+      "failure_domains": ["fd-frank-one"]
+    },
+    {
+      "id": "c_frank_two",
+      "person_id": "p_alice",
+      "issuer": "frank-proxy-two",
+      "role": "apparently-independent-b",
+      "services": ["deploy"],
+      "tier": 2,
+      "failure_domains": ["fd-frank-two"]
+    }
+  ],
+  "rules": {
+    "alice_badge": {
+      "type": "credential",
+      "credential_id": "c_alice_badge"
+    },
+    "root_anchor": {
+      "type": "credential",
+      "credential_id": "c_root_anchor"
+    },
+    "dana_source": {
+      "type": "and",
+      "children": ["root_anchor", "dana_credential"]
+    },
+    "erin_source": {
+      "type": "and",
+      "children": ["root_anchor", "erin_credential"]
+    },
+    "frank_one_source": {
+      "type": "and",
+      "children": ["root_anchor", "frank_one_credential"]
+    },
+    "frank_two_source": {
+      "type": "and",
+      "children": ["root_anchor", "frank_two_credential"]
+    },
+    "dana_credential": {
+      "type": "credential",
+      "credential_id": "c_dana_source"
+    },
+    "erin_credential": {
+      "type": "credential",
+      "credential_id": "c_erin_source"
+    },
+    "frank_one_credential": {
+      "type": "credential",
+      "credential_id": "c_frank_one"
+    },
+    "frank_two_credential": {
+      "type": "credential",
+      "credential_id": "c_frank_two"
+    },
+    "good_two_sources": {
+      "type": "threshold",
+      "k": 2,
+      "children": ["dana_source", "erin_source"]
+    },
+    "bad_two_sources": {
+      "type": "threshold",
+      "k": 2,
+      "children": ["frank_one_source", "frank_two_source"]
+    },
+    "either_dana_or_erin": {
+      "type": "or",
+      "children": ["dana_credential", "erin_credential"]
+    },
+    "cycle_a": {
+      "type": "or",
+      "children": ["dana_credential", "cycle_b"]
+    },
+    "cycle_b": {
+      "type": "and",
+      "children": ["cycle_a", "erin_credential"]
+    }
+  },
+  "invariants": {
+    "always_authenticatable": ["proxy-login", "shared-anchor-good"],
+    "always_deny": ["shared-subordinate-issuer-bad"]
+  }
+}

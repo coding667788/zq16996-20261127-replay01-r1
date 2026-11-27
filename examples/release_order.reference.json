@@ -1,0 +1,15 @@
+{
+  "status": "ok",
+  "minimum_total_cost": 2,
+  "release_total_order": [
+    "s_add_erin",
+    "s_harden"
+  ],
+  "release_batches": [
+    "wave-one"
+  ],
+  "selected_constraint_ids": [],
+  "honored_precedence_edge_ids": [
+    "e_erin_before_harden"
+  ]
+}

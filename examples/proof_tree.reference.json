@@ -1,0 +1,48 @@
+{
+  "allowed": true,
+  "unique_credential_count": 3,
+  "credentials": [
+    "c_root_anchor",
+    "c_dana_source",
+    "c_erin_source"
+  ],
+  "proof": {
+    "type": "threshold",
+    "rule_id": "good_two_sources",
+    "k": 2,
+    "children": [
+      {
+        "type": "and",
+        "rule_id": "dana_source",
+        "children": [
+          {
+            "type": "credential",
+            "rule_id": "root_anchor",
+            "credential_id": "c_root_anchor"
+          },
+          {
+            "type": "credential",
+            "rule_id": "dana_credential",
+            "credential_id": "c_dana_source"
+          }
+        ]
+      },
+      {
+        "type": "and",
+        "rule_id": "erin_source",
+        "children": [
+          {
+            "type": "credential",
+            "rule_id": "root_anchor",
+            "credential_id": "c_root_anchor"
+          },
+          {
+            "type": "credential",
+            "rule_id": "erin_credential",
+            "credential_id": "c_erin_source"
+          }
+        ]
+      }
+    ]
+  }
+}

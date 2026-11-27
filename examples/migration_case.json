@@ -1,0 +1,88 @@
+{
+  "schema": "proofinterlock/case@1",
+  "description": "Wrong current order fails after hardening first; minimum safe order adds the missing source first.",
+  "people": [
+    {"id": "p_alice", "aliases": ["alice-phone", "alice-agent"]},
+    {"id": "p_dana", "aliases": ["dana-ca"], "failure_domains": ["fd-dana"]},
+    {"id": "p_erin", "aliases": ["erin-ca"], "failure_domains": ["fd-erin"]}
+  ],
+  "budget": 5,
+  "credentials": [
+    {
+      "id": "c_dana",
+      "person_id": "p_alice",
+      "issuer": "dana-ca",
+      "role": "deployer",
+      "services": ["deploy"],
+      "tier": 2,
+      "failure_domains": ["fd-dana"]
+    }
+  ],
+  "rules": {
+    "dana_cred": {"type": "credential", "credential_id": "c_dana"},
+    "deploy_policy": {
+      "type": "threshold",
+      "k": 1,
+      "children": ["dana_cred"]
+    }
+  },
+  "requests": [
+    {"id": "deploy-ok", "person": "alice-phone", "service": "deploy", "rule": "deploy_policy"},
+    {"id": "never-allow-ghost", "person": "p_ghost", "service": "deploy", "rule": "missing_policy"}
+  ],
+  "invariants": {
+    "always_authenticatable": ["deploy-ok"],
+    "always_deny": ["never-allow-ghost"]
+  },
+  "precedence_edges": [
+    {"id": "e_erin_before_harden", "before": "s_add_erin", "after": "s_harden"}
+  ],
+  "release_batches": [
+    {"id": "wave-one", "shards": ["s_add_erin", "s_harden"], "atomic": false, "cost": 2}
+  ],
+  "current_plan": {
+    "id": "bad-replay-order",
+    "steps": [
+      {"batch": "wave-one", "order": ["s_harden", "s_add_erin"]}
+    ]
+  },
+  "shards": [
+    {
+      "id": "s_add_erin",
+      "cost": 1,
+      "batch": "wave-one",
+      "publisher": "publisher-erin",
+      "after": {
+        "credentials": [
+          {
+            "id": "c_erin",
+            "person_id": "p_alice",
+            "issuer": "erin-ca",
+            "role": "independent-deployer",
+            "services": ["deploy"],
+            "tier": 2,
+            "failure_domains": ["fd-erin"]
+          }
+        ],
+        "rules": {
+          "erin_cred": {"type": "credential", "credential_id": "c_erin"}
+        }
+      }
+    },
+    {
+      "id": "s_harden",
+      "cost": 1,
+      "batch": "wave-one",
+      "publisher": "gateway-publisher",
+      "after": {
+        "rules": {
+          "deploy_policy": {
+            "type": "threshold",
+            "k": 2,
+            "children": ["dana_cred", "erin_cred"]
+          }
+        }
+      }
+    }
+  ]
+}

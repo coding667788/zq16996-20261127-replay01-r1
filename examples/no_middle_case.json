@@ -1,0 +1,127 @@
+{
+  "schema": "proofinterlock/case@1",
+  "description": "Initial and final states are compliant, but both singleton intermediate subsets violate one invariant.",
+  "people": [
+    {
+      "id": "p_alice",
+      "aliases": [
+        "alice-phone"
+      ]
+    },
+    {
+      "id": "p_issuer_a",
+      "aliases": [
+        "issuer-a"
+      ]
+    },
+    {
+      "id": "p_issuer_b",
+      "aliases": [
+        "issuer-b"
+      ]
+    }
+  ],
+  "budget": 5,
+  "credentials": [
+    {
+      "id": "c_a",
+      "person_id": "p_alice",
+      "issuer": "issuer-a",
+      "role": "operator",
+      "services": [
+        "svc"
+      ],
+      "cost": 1,
+      "failure_domains": [
+        "fd-a"
+      ]
+    }
+  ],
+  "rules": {
+    "a_cred": {
+      "type": "credential",
+      "credential_id": "c_a"
+    },
+    "auth_policy": {
+      "type": "threshold",
+      "k": 1,
+      "children": [
+        "a_cred"
+      ]
+    }
+  },
+  "requests": [
+    {
+      "id": "auth",
+      "person": "alice-phone",
+      "service": "svc",
+      "rule": "auth_policy"
+    },
+    {
+      "id": "deny",
+      "person": "p_alice",
+      "service": "svc",
+      "rule": "deny_policy"
+    }
+  ],
+  "invariants": {
+    "always_authenticatable": [
+      "auth"
+    ],
+    "always_deny": [
+      "deny"
+    ]
+  },
+  "shards": [
+    {
+      "id": "s_open",
+      "cost": 1,
+      "after": {
+        "credentials": [
+          {
+            "id": "c_b",
+            "person_id": "p_alice",
+            "issuer": "issuer-b",
+            "role": "operator",
+            "services": [
+              "svc"
+            ],
+            "cost": 1,
+            "failure_domains": [
+              "fd-b"
+            ]
+          }
+        ],
+        "rules": {
+          "b_cred": {
+            "type": "credential",
+            "credential_id": "c_b"
+          },
+          "deny_policy": {
+            "type": "credential",
+            "credential_id": "c_b"
+          }
+        }
+      }
+    },
+    {
+      "id": "s_close",
+      "cost": 1,
+      "after": {
+        "rules": {
+          "auth_policy": {
+            "type": "and",
+            "children": [
+              "a_cred",
+              "b_cred"
+            ]
+          },
+          "deny_policy": {
+            "type": "credential",
+            "credential_id": "does_not_exist"
+          }
+        }
+      }
+    }
+  ]
+}
